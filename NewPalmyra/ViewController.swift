@@ -17,6 +17,8 @@ class ViewController: UIViewController {
     var nodeModel:SCNNode!
     let nodeName = "arch-of-triumph"
     
+    @IBOutlet weak var scaleSlider: UISlider!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -34,14 +36,13 @@ class ViewController: UIViewController {
         sceneView.scene = scene
         let modelScene = SCNScene(named: "art.scnassets/arch-of-triumph.scn")!
         nodeModel = modelScene.rootNode.childNode(withName: nodeName, recursively: true)
-
         configureLighting()
+        configureSlider()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        let configuration = ARWorldTrackingConfiguration()
-        sceneView.session.run(configuration)
+        setUpSceneView()
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -81,10 +82,52 @@ class ViewController: UIViewController {
         // Pause the view's session
         sceneView.session.pause()
     }
-    
+
+    func setUpSceneView() {
+        let configuration = ARWorldTrackingConfiguration()
+        configuration.planeDetection = .horizontal
+        
+        sceneView.session.run(configuration)
+        
+        sceneView.delegate = self
+    }
+
     func configureLighting() {
         sceneView.autoenablesDefaultLighting = true
         sceneView.automaticallyUpdatesLighting = true
+    }
+    
+    func configureSlider() {
+        // Add an scaleSlider button
+        scaleSlider.addTarget(self, action: #selector(updateScaleWithSlider(_:)), for: .touchUpInside)
+        scaleSlider.minimumValue = 0.05
+        scaleSlider.maximumValue = 1.2
+        // add scaleSlider to view
+        sceneView.addSubview(scaleSlider)
+        
+        // Auto Layout
+        scaleSlider.translatesAutoresizingMaskIntoConstraints = true
+    }
+
+    func scaleNode(value: Float) {
+        SCNTransaction.begin()
+        SCNTransaction.animationDuration = 1
+        nodeModel.scale = SCNVector3(value, value, value)
+        SCNTransaction.commit()
+    }
+    
+    @IBAction func updateScaleWithSlider(_ sender: UISlider) {
+        guard let slider = sender as? UISlider else { return }
+        scaleNode(value: slider.value)
+    }
+
+    func showModel(_ node: SCNNode) {
+//        let modelClone = self.nodeModel.clone()
+        nodeModel.position = SCNVector3Zero
+
+        // Add model as a child to the node
+        node.addChildNode(nodeModel)
+        self.scaleNode(value: scaleSlider.value)
     }
     
     func session(_ session: ARSession, didFailWithError error: Error) {
@@ -103,16 +146,19 @@ class ViewController: UIViewController {
     }
 }
 
+extension UIColor {
+    open class var transparentNewPalmyraOrange: UIColor {
+        return UIColor(red: 196/255, green: 93/255, blue: 36/255, alpha: 0.50)
+    }
+}
+
 extension ViewController: ARSCNViewDelegate {
     
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
+        // Display detected planes
         if !anchor.isKind(of: ARPlaneAnchor.self) {
             DispatchQueue.main.async {
-                let modelClone = self.nodeModel.clone()
-                modelClone.position = SCNVector3Zero
-                
-                // Add model as a child to the node
-                node.addChildNode(modelClone)
+                self.showModel(node)
             }
         }
     }
