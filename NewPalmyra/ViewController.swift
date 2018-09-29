@@ -17,7 +17,12 @@ class ViewController: UIViewController {
     var nodeModel:SCNNode!
     let nodeName = "arch-of-triumph"
     
-    @IBOutlet weak var scaleSlider: UISlider!
+    @IBOutlet weak var scaleSlider: UISlider! {
+        //make it vertical
+        didSet {
+            scaleSlider.transform =  CGAffineTransform(rotationAngle: -CGFloat.pi/2)
+        }
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -100,8 +105,8 @@ class ViewController: UIViewController {
     func configureSlider() {
         // Add an scaleSlider button
         scaleSlider.addTarget(self, action: #selector(updateScaleWithSlider(_:)), for: .touchUpInside)
-        scaleSlider.minimumValue = 0.05
-        scaleSlider.maximumValue = 1.2
+        scaleSlider.minimumValue = 0.02
+        scaleSlider.maximumValue = 1.5
         // add scaleSlider to view
         sceneView.addSubview(scaleSlider)
         
