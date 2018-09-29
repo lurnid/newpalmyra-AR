@@ -10,7 +10,7 @@ import UIKit
 import SceneKit
 import ARKit
 
-class ViewController: UIViewController, ARSCNViewDelegate {
+class ViewController: UIViewController {
 
     @IBOutlet var sceneView: ARSCNView!
     
@@ -26,26 +26,21 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
         //sceneView.debugOptions = ARSCNDebugOptions.showWorldOrigin
-        sceneView.antialiasingMode = .multisampling4X
+//        sceneView.antialiasingMode = .multisampling4X
 
         // Create a new scene
         let scene = SCNScene()
-        
         // Set the scene to the view
         sceneView.scene = scene
-        
         let modelScene = SCNScene(named: "art.scnassets/arch-of-triumph.scn")!
-        
         nodeModel = modelScene.rootNode.childNode(withName: nodeName, recursively: true)
+
+        configureLighting()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        // Create a session configuration
         let configuration = ARWorldTrackingConfiguration()
-
-        // Run the view's session
         sceneView.session.run(configuration)
     }
     
@@ -87,20 +82,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         sceneView.session.pause()
     }
     
-
-    // MARK: - ARSCNViewDelegate
-    
-    // Override to create and configure nodes for anchors added to the view's session.
-    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
-        if !anchor.isKind(of: ARPlaneAnchor.self) {
-            DispatchQueue.main.async {
-                let modelClone = self.nodeModel.clone()
-                modelClone.position = SCNVector3Zero
-                
-                // Add model as a child to the node
-                node.addChildNode(modelClone)
-            }
-        }
+    func configureLighting() {
+        sceneView.autoenablesDefaultLighting = true
+        sceneView.automaticallyUpdatesLighting = true
     }
     
     func session(_ session: ARSession, didFailWithError error: Error) {
@@ -116,5 +100,20 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     func sessionInterruptionEnded(_ session: ARSession) {
         // Reset tracking and/or remove existing anchors if consistent tracking is required
         
+    }
+}
+
+extension ViewController: ARSCNViewDelegate {
+    
+    func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
+        if !anchor.isKind(of: ARPlaneAnchor.self) {
+            DispatchQueue.main.async {
+                let modelClone = self.nodeModel.clone()
+                modelClone.position = SCNVector3Zero
+                
+                // Add model as a child to the node
+                node.addChildNode(modelClone)
+            }
+        }
     }
 }
